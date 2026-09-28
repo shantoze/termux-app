@@ -1,4 +1,4 @@
-name: Build Release Universal
+name: Build Release 32-bit
 
 on:
   workflow_dispatch:
@@ -55,12 +55,15 @@ jobs:
           export TERMUX_APK_VERSION_TAG="$APK_VERSION_TAG"
           export TERMUX_PACKAGE_VARIANT="${{ env.PACKAGE_VARIANT }}"
           
+          # KUNCI UTAMA: Memaksa Gradle memecah APK berdasarkan arsitektur
+          export TERMUX_SPLIT_APKS_FOR_RELEASE_BUILDS="1"
+          
           if ! ./gradlew downloadBootstraps assembleRelease; then
             exit_on_error "Build failed for '$APK_VERSION_TAG' build."
           fi
 
-          echo "Validating APKs (Universal)"
-          for abi in universal; do
+          echo "Validating APKs (32-bit Only)"
+          for abi in armeabi-v7a; do
             if ! test -f "$APK_DIR_PATH/${APK_BASENAME_PREFIX}_$abi.apk"; then
               if test -f "$APK_DIR_PATH/${APK_BASENAME_PREFIX}_${abi}-unsigned.apk"; then
                 mv "$APK_DIR_PATH/${APK_BASENAME_PREFIX}_${abi}-unsigned.apk" "$APK_DIR_PATH/${APK_BASENAME_PREFIX}_$abi.apk"
@@ -73,17 +76,17 @@ jobs:
 
           echo "Generating sha25sums file"
           if ! (cd "$APK_DIR_PATH"; sha256sum \
-            "${APK_BASENAME_PREFIX}_universal.apk" \
+            "${APK_BASENAME_PREFIX}_armeabi-v7a.apk" \
             > "${APK_BASENAME_PREFIX}_sha256sums"); then
             exit_on_error "Generate sha25sums failed for '$APK_VERSION_TAG' release."
           fi
 
-      - name: Attach universal APK file
+      - name: Attach armeabi-v7a APK file
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.APK_BASENAME_PREFIX }}_universal
+          name: ${{ env.APK_BASENAME_PREFIX }}_armeabi-v7a
           path: |
-            ${{ env.APK_DIR_PATH }}/${{ env.APK_BASENAME_PREFIX }}_universal.apk
+            ${{ env.APK_DIR_PATH }}/${{ env.APK_BASENAME_PREFIX }}_armeabi-v7a.apk
             ${{ env.APK_DIR_PATH }}/output-metadata.json
 
       - name: Attach sha256sums file
