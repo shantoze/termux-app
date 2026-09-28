@@ -8,7 +8,7 @@ on:
   pull_request:
     branches:
       - master
-  workflow_dispatch:
+  workflow_dispatch: # Trigger untuk eksekusi manual
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package_variant: [ apt-android-7, apt-android-5 ]
+        package_variant: [ apt-android-7 ]
 
     steps:
       - name: Clone repository
@@ -62,7 +62,8 @@ jobs:
           export TERMUX_APK_VERSION_TAG="$APK_VERSION_TAG"
           export TERMUX_PACKAGE_VARIANT="${{ env.PACKAGE_VARIANT }}"
           
-          if ! ./gradlew assembleRelease; then
+          # Perbaikan: Memanggil task downloadBootstraps sebelum kompilasi rilis
+          if ! ./gradlew downloadBootstraps assembleRelease; then
             exit_on_error "Build failed for '$APK_VERSION_TAG' build."
           fi
 
